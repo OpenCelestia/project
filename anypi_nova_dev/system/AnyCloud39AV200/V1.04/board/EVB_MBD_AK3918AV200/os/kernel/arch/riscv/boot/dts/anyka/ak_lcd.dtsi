@@ -1,0 +1,244 @@
+/*
+ * Anycloud LCD panel dts
+ *
+ * Copyright (C) 2024 Anyka(Guangzhou) Microelectronics Technology Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&lcdc {
+    //set to resolution ratio
+    lcd-logo-width = <1024>; //note that need set equal to panel-width
+    lcd-logo-height = <600>;//note that need set equal to panel-height
+    //[fmt1:fmt0] 00 16bits input(RGB565 or BGR565)
+    //[fmt1:fmt0] 01 24bits input(RGB888 or BGR888)
+    //[fmt1:fmt0] 10 or 11 32bits input(ARGB888 ABGR888 RGBA888 BGRA888)
+    lcd-logo-fmt0 = <1>;
+    lcd-logo-fmt1 = <0>;
+    lcd-logo-rgb-seq = <1>; //0 for BGR, 1 for RGB
+
+    lcd-fb-type = <1>; //0:single buffer; 1:double buffer
+///*****************************MIPI panel************************************
+    lcd-alarm-empty = <128>;
+    lcd-alarm-full = <510>;
+    lcd-dma-mode = <1>;
+    //lcd-dummy-seq = <0>; //for 8bit rgb panel set
+    //lcd-rgb-seq-sel = <0>;
+    //lcd-rgb-odd-seq = <0>;
+    //lcd-rgb-even-seq = <0>;
+    lcd-rgb-tpg-sel = <1>;
+    lcd-vpage-en = <0>; //don't support vpage function in driver
+    lcd-blank-sel = <0>;
+    lcd-pos-blank-level = <0>;
+    lcd-neg-blank-level = <0>;
+    lcd-rgb-bg-color = <0x00000000>;
+    lcd-vh-delay-en = <0>;
+    lcd-vh-delay-cycle = <0>;
+    lcd-v-unit = <0>;
+    lcd-alert-line = <30>;
+    status = "okay";
+     //don't support MIPI LCD
+
+    //RGB panel
+    HT070GB: lcd-panel@1 {
+        compatible = "HT,HT070GB";   // for HT,HT070GB
+        panel-if = <0>; //0 for RGB, 1 for Reserved, 2 for MPU
+
+        reset_keep = <20>;   //used to keep electricity low at reset_pin
+        reset_delay = <150>;  //used to hold steady at reset_pin
+        reset-level = <0>;
+
+        panel-rgb-seq = <1>; //0 for BGR, 1 for RGB
+        panel-width = <1024>;
+        panel-height = <600>;
+
+        panel-pclk-rate = <51500000>; //pixel clock = 800M/(pclk_div+1)
+        panel-thpw = <1>;
+        panel-thb = <160>;
+        panel-thf = <160>;
+        panel-tvpw = <1>;
+        panel-tvb = <23>;
+        panel-tvf = <12>;
+
+        panel-pclk-pol = <1>; //0:pos, 1:neg
+        panel-hsync-pol = <1>;
+        panel-vsync-pol = <1>;
+        panel-vogate-pol = <0>;
+        panel-bus-width = <3>; //0:8bits,1:16bits,2:18bits,3:24bits
+        panel-sync-mode = <1>; 
+
+        status = "disable";
+    };
+    //RGB panel
+    HX070WS0057BCB: lcd-panel@2 {
+        compatible = "HX,070WS0057B-C-B";   // for HX 070WS0057B-C-B
+        panel-if = <0>; //0 for RGB, 1 for Reserved, 2 for MPU
+
+        reset_keep = <20>;   //used to keep electricity low at reset_pin
+        reset_delay = <150>;  //used to hold steady at reset_pin
+        reset-level = <0>;
+
+        panel-rgb-seq = <1>; //0 for BGR, 1 for RGB
+        panel-width = <1024>;
+        panel-height = <600>;
+
+        panel-pclk-rate = <51500000>; //pixel clock = 800M/(pclk_div+1)
+        panel-thpw = <20>;
+        panel-thb = <140>;
+        panel-thf = <160>;
+        panel-tvpw = <3>;
+        panel-tvb = <20>;
+        panel-tvf = <12>;
+
+        panel-pclk-pol = <1>; //0:pos, 1:neg
+        panel-hsync-pol = <1>;
+        panel-vsync-pol = <1>;
+        panel-vogate-pol = <0>;
+        panel-bus-width = <3>; //0:8bits,1:16bits,2:18bits,3:24bits
+        panel-sync-mode = <1>; 
+
+        status = "disable";
+    };
+
+    ESHX035WQ00: lcd-panel@3 {
+        compatible = "ST7365-G5,ESHX035WQ00";
+        panel-if = <2>;//0 for RGB, 1 for Reserved, 2 for MPU
+        reset-keep = <10>;//10 used to keep electricity low at reset_pin 
+        reset-delay = <130>;//120used to hold steady at reset_pin
+        reset-level = <0>;
+        panel-width = <320>;
+        panel-height = <480>;
+        panel-pclk-rate = <30000000>; //default pixel clock = Peri_pll/(pclk_div+1)
+        panel-data-width = <0>; //0:8bits,1:16bits,2:18bits,3:9bits
+        panel-color-mode = <1>; //0:4K 1:64K/256K
+        panel-rs-polarity = <1>; //0:negative(0 means data while 1 means command)
+        //1:positive(0 means command while 1 means data)
+        panel-wr-cycle = <15>; // 20 write timing setting, wr-cycle >= 4*(wr-low) (8/9bits mode)
+        panel-wr-low = <5>; // 5 write timing setting,wr_cycle_len/2 - wr_low_len >= 2 (8/9bits mode)
+
+        //0 for portrait, 1 for landscape
+        panel-direction = <1>;
+
+        panel-init-list = < 0x11 0xFFF
+            0x36 0x48 0xFFF   //控制显示方向 0x48 从左到右，从上到下 0x88 从下到上，从右到左
+            0x3A 0x55 0xFFF   //格式 16bits
+            0xB4 0x01 0xFFF
+            0x35 0x00 0xFFF
+            0xB5 0x02 0x02 0x00 0x04 0xFFF
+            0xB6 0xBB 0x62 0x3B 0xFFF
+            0xC0 0x80 0x25 0x20 0xFFF
+            0xC1 0x06 0xFFF
+            0xC2 0xA7 0xFFF
+            0xC5 0x25 0xFFF
+            0xE8 0x40 0x8A 0x00 0x29 0x19 0xA5 0x33 0xFFF
+            0xE0 0xF0 0x09 0x0B 0x06 0x04 0x15 0x2F 0x54 0x42 0x3C 0x17 0x14 0x18 0x1B 0xFFF
+            0xE1 0xF0 0x09 0x0B 0x06 0x04 0x03 0x2D 0x43 0x42 0x3B 0x16 0x14 0x17 0x1B 0xFFF
+            0x29 0xFFF>;
+        status = "disable";
+    };
+
+    TFT035F014: lcd-panel@4 {
+        compatible = "ILI9488,TFT035F014";
+        panel-if = <2>;//0 for RGB, 1 for MIPI, 2 for MPU
+        reset-keep = <10>;//10 used to keep electricity low at reset_pin
+        reset-delay = <50>;
+        reset-level = <1>;
+        panel-width = <320>;
+        panel-height = <480>;
+        //panel-pclk-div = <4>; //default pixel clock = Peri_pll/(pclk_div+1)
+        panel-pclk-rate = <30000000>; //default pixel clock = Peri_pll/(pclk_div+1)
+        panel-data-width = <1>; //0:8bits,1:16bits,2:18bits,3:9bits
+        panel-color-mode = <1>; //0:4K 1:64K/256K
+        panel-rs-polarity = <1>; //0:negative(0 means data while 1 means command)
+        //1:positive(0 means command while 1 means data)
+        panel-wr-cycle = <20>; // 20 write timing setting, wr-cycle >= 4*(wr-low) (8/9bits mode)
+        panel-wr-low = <5>; // 5 write timing setting,wr_cycle_len/2 - wr_low_len >= 2 (8/9bits mode)
+
+        //0 for portrait, 1 for landscape
+        panel-direction = <1>;
+
+        panel-init-list = <0xE0 0x00 0x09 0x0C 0x03 0x10 0x06 0x34 0x68 0x49 0x02 0x0A 0x07 0x2C 0x31 0x0F 0xFFF
+        0xE1 0x00 0x12 0x15 0x02 0x10 0x06 0x35 0x35 0x4A 0x05 0x10 0x0C 0x2F 0x33 0x0F 0xFFF
+        0xC0 0x0F 0x0F 0xFFF
+        0xC1 0x44 0xFFF
+        0xC5 0x00 0x66 0x80 0xFFF
+        0x36 0x48 0xFFF
+        0x35 0x00 0xFFF
+        0x3A 0x55 0xFFF
+        0xB1 0xA0 0x11 0xFFF
+        0xB4 0x02 0xFFF
+        0xEE 0x00 0x04 0xFFF
+        0xE9 0x00 0xFFF
+        0xF7 0xA9 0x51 0x2C 0x82 0xFFF
+        0x20 0xFFF // inversion off
+        0x11 0xFFF
+        0x29 0xFFF>;
+        status = "disable";
+    };
+
+    adt07016BR50: lcd-panel@5 { //for AJB RGB panel setting
+        compatible = "sat,sat070cp50";
+        panel-if = <0>; //0 for RGB, 1 for Reserved, 2 for MPU
+
+        reset_keep = <20>;   //used to keep electricity low at reset_pin
+        reset_delay = <150>;  //used to hold steady at reset_pin
+        reset-level = <0>;
+
+        panel-rgb-seq = <1>; //0 for BGR, 1 for RGB
+        panel-width = <1024>;
+        panel-height = <600>;
+        panel-pclk-rate = <72700000>; //pixel clock = 800M/(pclk_div+1)
+        panel-thpw = <60>;
+        panel-thb = <100>;
+        panel-thf = <120>;
+        panel-tvpw = <2>;
+        panel-tvb = <21>;
+        panel-tvf = <12>;
+        panel-pclk-pol = <0>; //0:pos, 1:neg
+        panel-hsync-pol = <1>;
+        panel-vsync-pol = <1>;
+        panel-vogate-pol = <0>;
+        panel-bus-width = <3>; //0:8bits,1:16bits,2:18bits,3:24bits
+        panel-sync-mode = <1>; 
+
+        status = "disable";
+    };
+
+    HT070QT: lcd-panel@6 {
+        compatible = "HT,HT070QT";
+        panel-if = <0>; //0 for RGB, 1 for Reserved, 2 for MPU
+
+        reset_keep = <20>;   //used to keep electricity low at reset_pin
+        reset_delay = <150>;  //used to hold steady at reset_pin
+        reset-level = <0>;
+
+        panel-rgb-seq = <1>; //0 for BGR, 1 for RGB
+        panel-width = <800>;
+        panel-height = <480>;
+
+        panel-pclk-rate = <33000000>; //pixel clock
+        panel-thpw = <10>;
+        panel-thb = <36>;
+        panel-thf = <210>;
+        panel-tvpw = <10>;
+        panel-tvb = <13>;
+        panel-tvf = <22>;
+
+        panel-pclk-pol = <1>; //0:pos, 1:neg
+        panel-hsync-pol = <1>;
+        panel-vsync-pol = <1>;
+        panel-vogate-pol = <0>;
+        panel-bus-width = <3>; //0:8bits,1:16bits,2:18bits,3:24bits
+        panel-sync-mode = <1>;
+
+        status = "disable";
+    };
+};

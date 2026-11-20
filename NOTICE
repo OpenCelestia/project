@@ -1,0 +1,33 @@
+Celestia — project
+Copyright 2024-2026 Guangzhou Anyka Microelectronics Co., Ltd.
+
+This product includes software developed by
+Guangzhou Anyka Microelectronics Co., Ltd. and the Celestia project.
+
+Licensed under the Apache License, Version 2.0 (see the LICENSE file).
+
+--------------------------------------------------------------------------------
+Third-party / vendor components  (NOT covered by the Apache-2.0 license above)
+--------------------------------------------------------------------------------
+
+This repository contains board bring-up assets that include vendor-proprietary
+and commercial third-party material. These files are open-source tier C: they
+are distributed in this repository, they are the property of their respective
+owners, and they are NOT covered by the Apache-2.0 license above. Do not
+relicense them as Apache-2.0:
+
+  - system/AnyCloud39AV*/**                 Anyka SoC BSP/SDK (vendor proprietary)
+  - **/patch/platform/lib/libak_nne.{so,a}  Anyka NN engine (vendor)
+  - **/patch/platform/lib/libak_nna.{so,a}  Anyka NN accelerator (vendor)
+  - **/patch/platform/lib/libmpi_svp.{so,a} Anyka media/vision (vendor)
+  - **/lib/libVolcEngineRTCLite.so          VolcEngine RTC SDK (commercial)
+  - **/model_*.bin, ak_font_16.bin          Vendor model / font assets
+  - **/tools/burntool/*, DDR3_*.bin         Vendor flashing tools / DDR init
+
+--------------------------------------------------------------------------------
+Notice
+--------------------------------------------------------------------------------
+
+Board configuration files (wpa_supplicant.conf, *_wlan_config.ini, etc.) must
+not contain real Wi-Fi credentials or secrets. Replace SSIDs, pre-shared keys,
+and any tokens with placeholders before public redistribution.

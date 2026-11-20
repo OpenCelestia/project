@@ -1,0 +1,21 @@
+# /etc/fstab: static file system information.
+#
+# Use 'blkid -o value -s UUID' to print the universally unique identifier
+# for a device; this may be used with UUID= as a more robust way to name
+# devices that works even if disks are added and removed. See fstab(5).
+#
+# anypi_nova (ActionCam): do NOT mount tmpfs on /mnt.
+# /mnt is reserved for SD (mmcblk1p1) via mount_install.sh -> /mnt/install/...
+#
+
+#
+# tmpfs and sysfs need kernel file system support.
+# configuration is CONFIG_SYS and CONFIG_TMPFS
+#
+
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+proc            /proc           proc    defaults            0   0
+tmpfs           /tmp            tmpfs   defaults            0   0
+tmpfs           /var            tmpfs   defaults            0   0
+devpts          /dev/pts        devpts  defaults            0   0
+sysfs           /sys            sysfs   defaults            0   0

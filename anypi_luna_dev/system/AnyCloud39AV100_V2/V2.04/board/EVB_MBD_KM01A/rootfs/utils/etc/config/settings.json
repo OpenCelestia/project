@@ -1,0 +1,35 @@
+{
+  "program": "/usr/sbin/luna_dev_main",
+  "launch_mode": "ipcamera",
+  "language": {
+    "id": 1
+  },
+  "wifi": {
+    "enable": 1,
+    "ssid": "akdemo",
+    "psk": "",
+    "ability": 2,
+    "mode": 0,
+    "auto_connect": 1,
+    "ap": {
+      "enable": 0,
+      "ssid": "wifi_ap",
+      "psk": ""
+    }
+  },
+  "device": {
+    "id": "0001"
+  },
+  "dormancy": {
+    "server_ip": "192.168.137.1",
+    "server_port": 51238
+  },
+  "modules": {
+    "ipc_cam": {
+      "enable": true,
+      "type": "so",
+      "so_path": "/usr/lib/libipc_cam_app.so",
+      "config_path": "/etc/config/fw_video_config.json"
+    }
+  }
+}

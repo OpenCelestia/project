@@ -1,0 +1,6 @@
+# Build junk only.
+# Product overlay .ko / .so / .a / .bin / .img are open-source tier C.
+# They stay in this repository and are not covered by Apache-2.0.
+*.o
+*.o.d
+*.bak

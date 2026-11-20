@@ -1,0 +1,12 @@
+{
+
+  "ip_geo_url": "http://ip-api.com/json/?fields=status,message,city,country&lang=zh-CN",
+
+  "weather_api_url_template": "http://api.seniverse.com/v3/weather/now.json?key={key}&location={location}&language=zh-Hans&unit=c",
+
+  "weather_api_key": "YOUR_WEATHER_API_KEY",
+
+  "fallback_location": "guangzhou"
+
+}
+

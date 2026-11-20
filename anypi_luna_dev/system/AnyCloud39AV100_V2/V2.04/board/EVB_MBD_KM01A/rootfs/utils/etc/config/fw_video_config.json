@@ -1,0 +1,116 @@
+{
+/* anypi_luna_dev (headless ipcamera / RTSP):
+ *   main 1920x1080 H.264 25fps -> local record (vs0)
+ *   sub  1024x576  H.264 25fps -> RTSP live (vs1)
+ *   crop 2560x1440 = 16:9 from sensor
+ *
+ * No wearable LCD preview (256x192 / role=preview).
+ * No AI / picture streams — AI stays off in ipc_cam.
+ *
+ * Framework default file: /etc/config/fw_video_config.json
+ * (MULTIMEDIA_CFG_VIDEO_FILE). ipc_cam load_config uses this path. */
+"app_stream_usage": {
+    "ipc_cam": {
+        "roles_used": ["main", "sub"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["main (record if SD)", "sub (RTSP)"],
+        "notes": "headless: main=record, sub=RTSP; no LCD preview"
+    }
+},
+    "channels": [
+        {
+            "group_id": 0,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 1920,
+                    "height": 1080,
+                    "max_buffers": 2,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 240, 2560, 1440 ]
+                }
+            ]
+        },
+        {
+            "group_id": 1,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 1024,
+                    "height": 576,
+                    "max_buffers": 2,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 240, 2560, 1440 ]
+                }
+            ]
+        }
+    ],
+    "streams": [
+        {
+            "name": "video_main",
+            "role": "main",
+            "capabilities": ["h264_encode", "storage", "osd_main"],
+            "cirbuf_size": 2048000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 25,
+            "channel_group_id": 0,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 0,
+                "level": 40
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 4096,
+                        "buffer_size": 4096,
+                        "max_qp": 40,
+                        "min_qp": 28,
+                        "change_pos": 75
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 40
+            }
+        },
+        {
+            "name": "video_sub",
+            "role": "sub",
+            "capabilities": ["h264_encode", "live_stream", "broadcast_consumer"],
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 25,
+            "channel_group_id": 1,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 0,
+                "level": 40
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 2048,
+                        "buffer_size": 2048,
+                        "max_qp": 40,
+                        "min_qp": 28,
+                        "change_pos": 75
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 40
+            }
+        }
+    ]
+}

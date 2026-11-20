@@ -1,0 +1,124 @@
+{
+  "program": "/usr/sbin/nova_main",
+  "launch_mode": "ui",
+  "language": {
+    "id": 1
+  },
+  "wifi": {
+    "enable": 1,
+    "ssid": "YOUR_WIFI_SSID",
+    "psk": "",
+    "ability": 2,
+    "mode": 0,
+    "auto_connect": 0,
+    "ap": {
+      "enable": 0,
+      "ssid": "wifi_ap",
+      "psk": ""
+    }
+  },
+  "storage": {
+    "mode": 0
+  },
+  "media": {
+    "audio_path": "/usr/data/media/music",
+    "video_path": "/mnt/album/Record",
+    "picture_path": "/mnt/album/Pictures"
+  },
+  "device": {
+    "id": "0001"
+  },
+  "dormancy": {
+    "server_ip": "",
+    "server_port": 51238
+  },
+  "modules": {
+    "gui_tablet": {
+      "enable": true,
+      "type": "static",
+      "config_path": "/etc/config/settings.json"
+    },
+    "service_uvc": {
+      "enable": false,
+      "type": "static",
+      "config_path": "/etc/config/app_uvc_config.ini"
+    },
+    "cloud_aliyun": {
+      "enable": false,
+      "type": "so",
+      "so_path": "/usr/lib/libaliyun_app.so",
+      "config_path": "/etc/config/app_bailian_config.ini"
+    },
+    "cloud_volc_engine": {
+      "enable": false,
+      "type": "so",
+      "so_path": "/usr/lib/libvolc_engine_app.so",
+      "config_path": "/etc/config/app_volc_config.ini"
+    },
+    "cloud_aws": {
+      "enable": false,
+      "type": "so",
+      "so_path": "/usr/lib/libaws.so",
+      "config_path": "/etc/config/app_aws_config.ini"
+    },
+    "cloud_cmcc": {
+      "enable": false,
+      "type": "so",
+      "so_path": "/usr/lib/libcmcc.so",
+      "config_path": "/etc/config/app_cmcc_config.ini"
+    },
+    "cloud_ctcc": {
+      "enable": false,
+      "type": "so",
+      "so_path": "/usr/lib/libctcc.so",
+      "config_path": "/etc/config/app_ctcc_config.ini"
+    },
+    "cloud_tuya": {
+      "enable": false,
+      "type": "so",
+      "so_path": "/usr/lib/libtuya.so",
+      "config_path": "/etc/config/app_tuya_config.ini"
+    },
+    "service_weather": {
+      "enable": true,
+      "type": "static",
+      "config_path": "/etc/config/weather.json"
+    },
+    "service_studio": {
+      "enable": true,
+      "type": "so",
+      "so_path": "/usr/lib/libstudio.so",
+      "config_path": "/etc/config/settings.json"
+    }
+  },
+  "installed_apps": {
+    "schema_version": 1,
+    "apps": [
+      {
+        "app_id": "ipc_camera",
+        "install_path": "/mnt/install/apps/ipc_camera",
+        "enabled": true
+      },
+      {
+        "app_id": "camera",
+        "install_path": "/mnt/install/apps/camera",
+        "enabled": true
+      },
+      {
+        "app_id": "audio_algo",
+        "install_path": "/mnt/install/apps/audio_algo",
+        "enabled": true
+      },
+      {
+        "app_id": "setting",
+        "install_path": "/usr/apps/setting",
+        "enabled": true
+      },
+      {
+        "app_id": "volc_engine",
+        "install_path": "/mnt/install/apps/volc_engine",
+        "enabled": false
+      }
+    ]
+  }
+}

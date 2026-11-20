@@ -1,0 +1,257 @@
+{
+"osd_time": {
+    "on": true,
+    "pos": { "x": 0, "y": 0 }
+},
+"osd_text": [
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} }
+],
+"osd_logo": {
+    "on": false,
+    "pos": { "x": 0, "y": 0 }
+},
+"app_stream_usage": {
+    "ipc_camera": {
+        "roles_used": ["main", "preview", "ai"],
+        "multimedia_set_camera_ai_enabled": true,
+        "stream_reg_client": ["preview"],
+        "notes": "预览走 broadcast；AI 分析走 ai 路；main 可供 RTSP/录像"
+    },
+    "camera_app": {
+        "roles_used": ["preview", "main", "picture", "picture_bg", "preview_bg"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview优先", "main回退"],
+        "notes": "预览 NV12；拍照保存主 JPEG，并在文件末尾附 picture_bg 子 JPEG"
+    },
+    "settings_lv_video_ctrl": {
+        "roles_used": ["preview"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview"],
+        "notes": "设置页小窗预览，与相机预览同 NV12/broadcast 路径"
+    },
+    "settings_qr_scan": {
+        "roles_used": ["qr"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["role=qr，无独立 qr_scan 流时回退 preview"],
+        "notes": "ZXing 取 NV12；无 qr_scan 命名流时 index 同 preview"
+    },
+    "volc_app": {
+        "roles_used": ["preview_bg"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview_bg"],
+        "notes": "火山后台推流使用，使用preview_bg流"
+    }
+},
+    "channels": [
+        {
+            "group_id": 0,
+            "config": [
+                {
+                    "device_id": 0,
+                    "_comment": "main/record/rtsp/picture: native 8MP 4:3 (3264x2448); sensor mount upright — hal_camera_config.ini rotation=0, no IPU rotate; full-frame crop",
+                    "width": 3264,
+                    "height": 2448,
+                    "max_buffers": 3,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 0, 3264, 2448 ]
+                }
+            ]
+        },
+        {
+            "group_id": 1,
+            "config": [
+                {
+                    "device_id": 0,
+                    "_comment": "UI preview: 800x480 LCD (5:3); center-crop sensor 4:3→5:3 (3264x1958) then scale; no IPU rotate (hal rotation=0)",
+                    "width": 800,
+                    "height": 480,
+                    "max_buffers": 3,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 245, 3264, 1958 ]
+                }
+            ]
+        },
+        {
+            "group_id": 2,
+            "config": [
+                {
+                    "device_id": 0,
+                    "_comment": "AI/NPU input: fixed model 640x384 (5:3); same 4:3→5:3 crop as UI preview; VPSS scale only, no IPU rotate",
+                    "width": 640,
+                    "height": 384,
+                    "max_buffers": 3,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 245, 3264, 1958 ]
+                }
+            ]
+        }
+    ],
+    "streams": [
+        {
+            "name": "video_main",
+            "role": "main",
+            "capabilities": ["h264_encode", "rtsp", "storage", "osd_main"],
+            "_comment_cirbuf": "8MP I-frames at the recording bitrate are often 0.5–1MB; 2MB cirbuf underruns and looks 花. 4MB holds an IDR plus several P frames.",
+            "cirbuf_size": 4194304,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "_comment_fps": "Keep 8MP; AV200 VENC budget ~3072x2048@30 (libmpi FormateFramerate). 3264x2448@30 exceeds → 'set venc fps fail, Encoder limit reached'. Max≈23fps; use the sensor max_fps (20).",
+            "fps": 20,
+            "channel_group_id": 0,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 2,
+                "_comment_level": "H.264 High profile, Level 5.1 (ak_venc.h=51) for 3264x2448. High profile is the recording quality path; Level error is separate from the Encoder-limit fps check",
+                "level": 51
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "_comment_bitrate": "8192kbps High. min_qp 18 ignored the cap and frames grew to ~390KB, so 8MP encode plus the card write held 12.5fps. QP 28–45 and change_pos 50 keep the average near 8192kbps so the sensor's 20fps can be stored.",
+                        "max_bitrate": 8192,
+                        "buffer_size": 8192,
+                        "max_qp": 45,
+                        "min_qp": 28,
+                        "change_pos": 50
+                    }
+                }
+            },
+            "gop_config": {
+                "_comment_gop": "gop=60@20fps ≈3s between IDR; packet loss lasts too long. gop=20 ≈1s recovery.",
+                "gop_len": 20
+            }
+        },
+        {
+            "name": "video_preview",
+            "role": "preview",
+            "capabilities": ["h264_encode", "ui_preview", "broadcast_consumer", "settings_small_window"],
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 20,
+            "channel_group_id": 1,
+            "codec_config": {
+                "codec_mode": 3,
+                "profile": 0,
+                "level": 30
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 2048,
+                        "buffer_size": 4096,
+                        "max_qp": 48,
+                        "min_qp": 20,
+                        "change_pos": 50
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 60
+            }
+        },
+        {
+            "name": "video_bg",
+            "role": "preview_bg",
+            "capabilities": ["h264_volc", "storage"],
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 20,
+            "channel_group_id": 1,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 0,
+                "level": 30
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 2048,
+                        "buffer_size": 4096,
+                        "max_qp": 48,
+                        "min_qp": 20,
+                        "change_pos": 50
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 20
+            }
+        },
+        {
+            "name": "ai",
+            "role": "ai",
+            "capabilities": ["nv12", "ai_infer", "ipc_overlay", "face_body_policy"],
+            "cirbuf_size": 524288,
+            "splice_format": 0,
+            "pixel_format": 17,
+            "channel_group_id": 2,
+            "fps": 15,
+            "codec_config": {
+                "codec_mode": 3
+            }
+        },
+        {
+            "name": "picture",
+            "role": "picture",
+            "_comment": "Alarm snapshot JPEG on main VPSS ch0 — avoids tearing down preview ch1 during capture",
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "channel_group_id": 0,
+            "fps": 20,
+            "codec_config": {
+                "codec_mode": 2,
+                "profile": 0
+            },
+            "rc_config": {
+                "mjpeg": {
+                        "quality": 100
+                    }
+            },
+            "gop_config": {
+                "gop_len": 60
+            }
+        },
+        {
+            "name": "picture_bg",
+            "role": "picture_bg",
+            "_comment": "800x480 JPEG stored after the main photo. The device gallery decodes this one.",
+            "cirbuf_size": 262144,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "channel_group_id": 1,
+            "fps": 20,
+            "codec_config": {
+                "codec_mode": 2,
+                "profile": 0
+            },
+            "rc_config": {
+                "mjpeg": {
+                    "quality": 80
+                }
+            },
+            "gop_config": {
+                "gop_len": 1
+            }
+        }
+    ]
+}

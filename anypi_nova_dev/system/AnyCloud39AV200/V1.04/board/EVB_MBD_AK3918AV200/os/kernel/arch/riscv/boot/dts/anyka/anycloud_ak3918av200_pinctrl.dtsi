@@ -1,0 +1,220 @@
+/*
+ * AK3918AV200
+ *
+ * Copyright (C) 2023 Anyka(Guangzhou) Microelectronics Technology Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/*
+* NOTE:
+* This is the common configuration about pinctrl with those customers no need to care about.
+* Like the mmc/eth, customers will less to modify them.
+* IF your pins are strongly relate on the specifically board.
+* Please move them to the board related file.
+*/
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/ak3918av200_pinctrl.h>
+
+&pinctrl {
+	/**
+	* "anyka,function": func index, please refer to dt-bindings/pinctrl/ak3918av200_pinctrl.h
+	* "anyka,pull": configuration of the pins
+	* Driving selector:
+	* 	GPIO[54:35]: only select DRIVE_SEL0~DRIVE_SEL3
+	*	GPIO[54:35]: select DRIVE_SEL0~DRIVE_SEL7
+	* Delay config:
+	*	DELAY(x), x is delay time, level1 corresponds to 10ps
+	*/
+
+	uart0_pins: uart0_pins {
+		anyka,pins = <XGPIO_033 XGPIO_034>;
+		anyka,function = <XGPIO_033_FUNC_UART0_RXD XGPIO_034_FUNC_UART0_TXD>;
+		anyka,config = <(INPUT_EN|PULL_UP)>;
+	};
+
+	uart1_pins:uart1_pins {
+		anyka,pins = <XGPIO_066 XGPIO_067>;
+		anyka,function = <XGPIO_066_FUNC_UART1_RXD XGPIO_067_FUNC_UART1_TXD>;
+		anyka,config = <(INPUT_EN|PULL_UP)>;
+	};
+
+    i2c0_pins: i2c0_pins {
+        anyka,pins = <XGPIO_036 XGPIO_035>;
+        anyka,function = <XGPIO_036_FUNC_I2C0_SDA XGPIO_035_FUNC_I2C0_SCL>;
+        anyka,pull = <(PULL_UP|INPUT_EN|SLEW_EN|HOLD_EN|DRIVE_SEL0)>;
+    };
+
+    i2c2_pins: i2c2_pins {
+        anyka,pins = <XGPIO_073 XGPIO_072>;
+        anyka,function = <XGPIO_073_FUNC_I2C2_SDA XGPIO_072_FUNC_I2C2_SCL>;
+        anyka,pull = <(PULL_UP|INPUT_EN|SLEW_EN|HOLD_EN|DRIVE_SEL0)>;
+    };
+
+    i2c3_pins: i2c3_pins {
+        anyka,pins = <XGPIO_032 XGPIO_031>;
+        anyka,function = <XGPIO_032_FUNC_I2C3_SDA XGPIO_031_FUNC_I2C3_SCL>;
+        anyka,pull = <(PULL_UP|INPUT_EN|SLEW_EN|HOLD_EN|DRIVE_SEL0)>;
+    };
+
+
+	spiflash_pins: spiflash_pins {
+		anyka,pins = <XGPIO_014
+					  XGPIO_012
+					  XGPIO_013
+					  XGPIO_011
+					  XGPIO_016
+					  XGPIO_015>;
+		anyka,function = <XGPIO_014_FUNC_SFC_CS0
+						  XGPIO_012_FUNC_SFC_SCLK
+						  XGPIO_013_FUNC_SFC_DIN
+						  XGPIO_011_FUNC_SFC_DOUT
+						  XGPIO_016_FUNC_SFC_WP
+						  XGPIO_015_FUNC_SFC_HOLD>;
+		anyka,pull = <INPUT_EN>;
+	};
+
+	spiflash_pins_sleep: spiflash_pins_sleep {
+		anyka,pins = <XGPIO_014
+					  XGPIO_012
+					  XGPIO_013
+					  XGPIO_011
+					  XGPIO_016
+					  XGPIO_015>;
+		anyka,function = <XGPIO_014_FUNC_GPIO14
+						  XGPIO_012_FUNC_GPIO12
+						  XGPIO_013_FUNC_GPIO13
+						  XGPIO_011_FUNC_GPIO11
+						  XGPIO_016_FUNC_GPIO16
+						  XGPIO_015_FUNC_GPIO15>;
+		anyka,pull = <0>;
+	};
+
+	spi0_pins: spi0_pins {
+		anyka,pins = <XGPIO_079
+					  XGPIO_081
+					  XGPIO_080
+					  XGPIO_082>;
+		anyka,function = <XGPIO_079_FUNC_SPI0_CS0
+						  XGPIO_081_FUNC_SPI0_SCLK
+						  XGPIO_080_FUNC_SPI0_DIN
+						  XGPIO_082_FUNC_SPI0_DOUT>;
+		anyka,pull = <INPUT_EN>;
+	};
+
+	spi0_pins_sleep: spi0_pins_sleep {
+		anyka,pins = <XGPIO_079
+					  XGPIO_081
+					  XGPIO_080
+					  XGPIO_082>;
+		anyka,function = <XGPIO_079_FUNC_GPIO79
+						  XGPIO_081_FUNC_GPIO81
+						  XGPIO_080_FUNC_GPIO80
+						  XGPIO_082_FUNC_GPIO82>;
+		anyka,pull = <INPUT_EN>;
+	};
+
+	saradc_ain1_pins: saradc_ain1_pins {
+		anyka,pins = <XGPIO_039>;
+		anyka,function = <XGPIO_039_FUNC_AIN1>;
+		anyka,pull = <0>;
+	};
+
+    saradc_ain2_pins: saradc_ain2_pins {
+		anyka,pins = <XGPIO_040>;
+		anyka,function = <XGPIO_040_FUNC_AIN2>;
+		anyka,pull = <0>;
+	};
+
+    saradc_ain3_pins: saradc_ain3_pins {
+		anyka,pins = <XGPIO_053>;
+		anyka,function = <XGPIO_053_FUNC_AIN3>;
+		anyka,pull = <0>;
+	};
+
+    saradc_ain4_pins: saradc_ain4_pins {
+		anyka,pins = <XGPIO_054>;
+		anyka,function = <XGPIO_054_FUNC_AIN4>;
+		anyka,pull = <0>;
+	};
+
+	gpiokey_pins:gpiokey_pins {
+		anyka,pins = <XGPIO_018>;
+		anyka,function = <XGPIO_018_FUNC_GPIO18>;
+		anyka,pull = <INPUT_EN>;
+	};
+
+	infrared_led_pins: infrared_led_pins {
+		anyka,pins = <XGPIO_020>;
+		anyka,function = <XGPIO_020_FUNC_GPIO20>;
+		anyka,pull = <(PULL_UP_EN|PULL_DOWN_EN|DIR_EN|DIR_OUTPUT|OUTPUT_EN)>;
+	};
+
+	state_led_pins: state_led_pins {
+		anyka,pins = <XGPIO_075>;
+		anyka,function = <XGPIO_075_FUNC_GPIO75>;
+		anyka,pull = <(PULL_UP_EN|PULL_DOWN_EN|DIR_EN|DIR_OUTPUT|OUTPUT_EN)>;
+	};
+
+	pwm0_pins: pwm0_pins {
+		anyka,pins = <XGPIO_055>;
+		anyka,function = <XGPIO_055_FUNC_PWM_TIMER0>;
+		anyka,pull = <(PULL_UP | PULL_UP_EN | SLEW_EN)>;
+	};
+
+	pwm1_pins: pwm1_pins {
+		anyka,pins = <XGPIO_074>;
+		anyka,function = <XGPIO_074_FUNC_PWM_TIMER1>;
+		anyka,pull = <(PULL_UP | PULL_UP_EN | SLEW_EN)>;
+	};
+
+	pwm2_pins: pwm2_pins {
+		anyka,pins = <XGPIO_017>;
+		anyka,function = <XGPIO_017_FUNC_PWM2>;
+		anyka,pull = <(PULL_UP | PULL_UP_EN | SLEW_EN)>;
+	};
+
+	pwm3_pins: pwm3_pins {
+		anyka,pins = <XGPIO_028>;
+		anyka,function = <XGPIO_028_FUNC_PWM_TIMER3>;
+		anyka,pull = <(PULL_UP | PULL_UP_EN | SLEW_EN)>;
+	};
+
+	pwm4_pins: pwm4_pins {
+		anyka,pins = <XGPIO_029>;
+		anyka,function = <XGPIO_029_FUNC_PWM_TIMER4>;
+		anyka,pull = <(PULL_UP | PULL_UP_EN | SLEW_EN)>;
+	};
+
+	pwm5_pins: pwm5_pins {
+		anyka,pins = <XGPIO_078>;
+		anyka,function = <XGPIO_078_FUNC_PWM_TIMER5>;
+		anyka,pull = <(PULL_UP | PULL_UP_EN | SLEW_EN)>;
+	};
+
+	speaker_en_pins: speaker_en_pins {
+		anyka,pins = <XGPIO_010>;
+		anyka,function = <XGPIO_010_FUNC_GPIO10>;
+		anyka,pull = <(DIR_EN | DIR_OUTPUT | OUTPUT_EN | OUT_LOW | PULL_UP_EN | PULL_UP | SLEW_EN)>;
+	};
+	pdm_pins: pdm_pins {
+		anyka,pins = <XGPIO_030
+					  XGPIO_031
+					  XGPIO_032>;
+		anyka,function = <XGPIO_030_FUNC_PDM_CLK
+						  XGPIO_031_FUNC_PDM_DATA0
+						  XGPIO_032_FUNC_PDM_DATA1>;
+		anyka,pull = <(DRIVE_SEL0|INPUT_EN)
+					  (DRIVE_SEL0|INPUT_EN)
+					  (DRIVE_SEL0|INPUT_EN)>;
+	};
+};

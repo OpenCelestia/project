@@ -1,0 +1,230 @@
+{
+/* 物理通道：group_id 与 streams[].channel_group_id 对应。
+   能力集与 Nova 应用绑定见根对象 app_stream_usage（说明用，解析器忽略未知字段）。
+   每路流的 process_capture_request 模板由 name 推导并写入 HAL（main/preview=video_record，ai=ai；
+   若增加 qr_scan* 命名流则为 qr_scan 模板）。批量请求仍发一次，HAL 按各路 type 覆盖模板。 */
+"osd_time": {
+    "on": true,
+    "pos": { "x": 0, "y": 0 }
+},
+"osd_text": [
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} },
+    { "on": false, "text": "", "pos": { "x": 0, "y": 0 }, "color": {} }
+],
+"osd_logo": {
+    "on": false,
+    "pos": { "x": 0, "y": 0 }
+},
+"app_stream_usage": {
+    "ipc_camera": {
+        "roles_used": ["main", "preview", "ai"],
+        "multimedia_set_camera_ai_enabled": true,
+        "stream_reg_client": ["preview"],
+        "notes": "预览走 broadcast；AI 分析走 ai 路；main 可供 RTSP/录像"
+    },
+    "camera_app": {
+        "roles_used": ["preview", "main", "picture"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview优先", "main回退"],
+        "notes": "预览 NV12；拍照走 picture JPEG，避免拆掉 preview"
+    },
+    "settings_lv_video_ctrl": {
+        "roles_used": ["preview"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview"],
+        "notes": "设置页小窗预览，与相机预览同 NV12/broadcast 路径"
+    },
+    "settings_qr_scan": {
+        "roles_used": ["qr"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["role=qr，无独立 qr_scan 流时回退 preview"],
+        "notes": "ZXing 取 NV12；无 qr_scan 命名流时 index 同 preview"
+    },
+    "volc_app": {
+        "roles_used": ["preview_bg"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview_bg"],
+        "notes": "火山后台推流使用，使用preview_bg流"
+    }
+},
+    "channels": [
+        {
+            "group_id": 0,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 2560,
+                    "height": 1440,
+                    "max_buffers": 3,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 0, 2560, 1440 ]
+                }
+            ]
+        },
+        {
+            "group_id": 1,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 1024,
+                    "height": 600,
+                    "max_buffers": 3,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 0, 2560, 1440 ]
+                }
+            ]
+        },
+        {
+            "group_id": 2,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 640,
+                    "height": 384,
+                    "max_buffers": 3,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 0, 2560, 1440 ]
+                }
+            ]
+        }
+    ],
+    "streams": [
+        {
+            "name": "video_main",
+            "role": "main",
+            "capabilities": ["h264_encode", "rtsp", "storage", "osd_main"],
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 15,
+            "channel_group_id": 0,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 1,
+                "level": 30
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 4096,
+                        "buffer_size": 4096,
+                        "max_qp": 50,
+                        "min_qp": 25,
+                        "change_pos": 75
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 60
+            }
+        },
+        {
+            "name": "video_preview",
+            "role": "preview",
+            "capabilities": ["h264_encode", "ui_preview", "broadcast_consumer", "settings_small_window"],
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 15,
+            "channel_group_id": 1,
+            "codec_config": {
+                "codec_mode": 3,
+                "profile": 0,
+                "level": 30
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 2048,
+                        "buffer_size": 4096,
+                        "max_qp": 48,
+                        "min_qp": 20,
+                        "change_pos": 50
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 60
+            }
+        },
+        {
+            "name": "video_bg",
+            "role": "preview_bg",
+            "capabilities": ["h264_volc"],
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 15,
+            "channel_group_id": 1,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 0,
+                "level": 30
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 2048,
+                        "buffer_size": 4096,
+                        "max_qp": 48,
+                        "min_qp": 20,
+                        "change_pos": 50
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 60
+            }
+        },
+        {
+            "name": "ai",
+            "role": "ai",
+            "capabilities": ["nv12", "ai_infer", "ipc_overlay", "face_body_policy"],
+            "cirbuf_size": 524288,
+            "splice_format": 0,
+            "pixel_format": 17,
+            "channel_group_id": 2,
+            "fps": 15,
+            "codec_config": {
+                "codec_mode": 3
+            }
+        },
+        {
+            "name": "picture",
+            "role": "picture",
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "channel_group_id": 1,
+            "fps": 15,
+            "codec_config": {
+                "codec_mode": 2,
+                "profile": 0
+            },
+            "rc_config": {
+                "mjpeg": {
+                        "quality": 100
+                    }
+            },
+            "gop_config": {
+                "gop_len": 60
+            }
+        }
+    ]
+}

@@ -1,0 +1,4 @@
+# Shell scripts on embedded Linux must use LF only.
+*.sh text eol=lf
+**/usr/sbin/*.sh text eol=lf
+**/etc/config/*.sh text eol=lf

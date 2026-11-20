@@ -1,0 +1,44 @@
+{
+  "program": "",
+  "launch_mode": "ui",
+  "modules": {
+    "gui_luna": {
+      "enable": true,
+      "type": "static",
+      "config_path": "/etc/config/settings.json"
+    }
+  },
+  "language": { "id": 1 },
+  "input": {
+    "keys": {
+      "back_code": 158,
+      "enter_code": 116,
+      "snap_code": 90,
+      "left_code": 103,
+      "right_code": 108
+    },
+    "power_key": {
+      "linux_code": 90,
+      "longpress_ms": 3000
+    }
+  },
+  "wifi": {
+    "enable": 1,
+    "ssid": "Anyka_MI_AE_7F",
+    "psk": "",
+    "ability": 2,
+    "mode": 0,
+    "ap": {
+      "enable": 0,
+      "ssid": "wifi_ap",
+      "psk": ""
+    }
+  },
+  "installed_apps": {
+    "schema_version": 1,
+    "apps": [
+      {"app_id":"camera","install_path":"/usr/apps/camera","enabled":true},
+      {"app_id":"dashcam","install_path":"/usr/apps/dashcam","enabled":true}
+    ]
+  }
+}

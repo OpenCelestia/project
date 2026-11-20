@@ -1,0 +1,34 @@
+{
+  "program": "/usr/user.strip.elf",
+  "launch_mode": "ipcamera",
+  "language": {
+    "id": 1
+  },
+  "wifi": {
+    "enable": 1,
+    "ssid": "akdemo",
+    "psk": "",
+    "ability": 0,
+    "mode": 0,
+    "auto_connect": 1
+  },
+  "device": {
+    "id": "mira"
+  },
+  "camera": {
+    "sensor": "sc1346",
+    "cis_type": "sc1346",
+    "isp_config": "/etc/config/isp_sc1346_mipi_1lane_av130.conf",
+    "hal_config": "/etc/config/hal_camera_config.ini",
+    "video_config": "/etc/config/fw_video_config.json",
+    "interface_mode": "mipi_1lane"
+  },
+  "modules": {
+    "ipc_cam": {
+      "enable": true,
+      "type": "so",
+      "so_path": "/usr/lib/libipc_cam_app.so",
+      "config_path": "/etc/config/fw_video_config.json"
+    }
+  }
+}

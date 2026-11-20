@@ -1,0 +1,282 @@
+{
+/* KM01W ACTCAM (CAMERA_MAX_CHANNEL=3):
+ * IMPORTANT:
+ * 1) channel_group_id is the channels[] array index (must be ordered 0,1,2...).
+ * 2) HAL physical channels are assigned by first-seen unique resolution order:
+ *      1st new resolution → HAL ch0 / VI CHN0
+ *      2nd new resolution → HAL ch1 / VI CHN1
+ *      3rd new resolution → HAL ch2 / VI CHN16 (chip max 640x640)
+ *    Therefore streams[] must introduce 1920 first, then 1024, then 256;
+ *    otherwise 1024x576 lands on CHN16 → ak_vi_set_chn_attr_ex fails → configure -1.
+ *   group 0  main/dashcam/picture  1920x1080 — main encode → HAL ch0
+ *   group 1  dashcam_rtsp          1024x576  — RTSP vs1 → HAL ch1
+ *   group 2  preview (/ai same res) 256x192  — LCD → HAL ch2 / CHN16
+ *   group 3  1600x1200 — reserved (no stream references currently)
+ *   group 4  480x288   — reserved (no stream references currently) */
+"app_stream_usage": {
+    "camera_app": {
+        "roles_used": ["preview", "main", "picture"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview"],
+        "main_vi_keepalive_on_preview": true,
+        "notes": "Sub-channel preview feeds LCD for the whole session; capture/record use group 0 main stream."
+    },
+    "dashcam_app": {
+        "roles_used": ["dashcam", "dashcam_rtsp", "preview", "picture"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview"],
+        "sub_stream_reg_on_rtsp_play": true,
+        "notes": "Record via LoopVideo; still capture key90→Photo/; RTSP=group1 1024x576."
+    },
+    "settings_lv_video_ctrl": {
+        "roles_used": ["preview"],
+        "multimedia_set_camera_ai_enabled": false,
+        "stream_reg_client": ["preview"],
+        "notes": "Settings page small-window preview"
+    }
+},
+    "channels": [
+        {
+            "group_id": 0,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 1920,
+                    "height": 1080,
+                    "max_buffers": 2,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 240, 2560, 1440 ]
+                }
+            ]
+        },
+        {
+            "group_id": 1,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 1024,
+                    "height": 576,
+                    "max_buffers": 2,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 240, 2560, 1440 ]
+                }
+            ]
+        },
+        {
+            "group_id": 2,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 256,
+                    "height": 192,
+                    "max_buffers": 2,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 0, 2560, 1920 ]
+                }
+            ]
+        },
+        {
+            "group_id": 3,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 1600,
+                    "height": 1200,
+                    "max_buffers": 2,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 0, 2560, 1920 ]
+                }
+            ]
+        },
+        {
+            "group_id": 4,
+            "config": [
+                {
+                    "device_id": 0,
+                    "width": 480,
+                    "height": 288,
+                    "max_buffers": 2,
+                    "rotation": 0,
+                    "mirror_enabled": 0,
+                    "flip_enabled": 0,
+                    "num_slices": 1,
+                    "crop": [ 0, 0, 2560, 1920 ]
+                }
+            ]
+        }
+    ],
+    "streams": [
+        {
+            "name": "video_main",
+            "role": "main",
+            "capabilities": ["h265_encode", "storage", "osd_main"],
+            "cirbuf_size": 2048000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 25,
+            "channel_group_id": 0,
+            "codec_config": {
+                "codec_mode": 1,
+                "profile": 4,
+                "level": 40
+            },
+            "rc_config": {
+                "hevc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 4096,
+                        "buffer_size": 4096,
+                        "max_qp": 50,
+                        "min_qp": 25,
+                        "change_pos": 75
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 40
+            }
+        },
+        {
+            "name": "video_dashcam_main",
+            "role": "dashcam",
+            "capabilities": ["h264_encode", "storage", "osd_main"],
+            "cirbuf_size": 2048000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 25,
+            "channel_group_id": 0,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 0,
+                "level": 40
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 4096,
+                        "buffer_size": 4096,
+                        "max_qp": 45,
+                        "min_qp": 20,
+                        "change_pos": 75
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 40
+            }
+        },
+        {
+            "name": "video_dashcam_rtsp",
+            "role": "dashcam_rtsp",
+            "capabilities": ["h264_encode", "live_stream", "broadcast_consumer"],
+            "cirbuf_size": 1024000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 25,
+            "channel_group_id": 1,
+            "codec_config": {
+                "codec_mode": 0,
+                "profile": 0,
+                "level": 40
+            },
+            "rc_config": {
+                "avc": {
+                    "rc_mode": 1,
+                    "vbr": {
+                        "max_bitrate": 2048,
+                        "buffer_size": 2048,
+                        "max_qp": 45,
+                        "min_qp": 20,
+                        "change_pos": 75
+                    }
+                }
+            },
+            "gop_config": {
+                "gop_len": 40
+            }
+        },
+        {
+            "name": "picture",
+            "role": "picture",
+            "capabilities": ["mjpeg_encode", "main_channel_capture"],
+            "cirbuf_size": 512000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "channel_group_id": 0,
+            "fps": 25,
+            "codec_config": {
+                "codec_mode": 2,
+                "profile": 0
+            },
+            "rc_config": {
+                "mjpeg": {
+                        "quality": 90,
+                        "max_bitrate": 4096
+                    }
+            }
+        },
+        {
+            "name": "video_preview",
+            "role": "preview",
+            "capabilities": ["nv12", "ui_preview", "broadcast_consumer", "nv12_raw_save"],
+            "cirbuf_size": 512000,
+            "splice_format": 0,
+            "pixel_format": 32,
+            "fps": 15,
+            "channel_group_id": 2,
+            "codec_config": {
+                "codec_mode": 3
+            }
+        },
+        {
+            "name": "ai",
+            "role": "ai",
+            "capabilities": ["nv12", "ai_infer"],
+            "cirbuf_size": 524288,
+            "splice_format": 0,
+            "pixel_format": 17,
+            "channel_group_id": 2,
+            "fps": 15,
+            "codec_config": {
+                "codec_mode": 3
+            }
+        }
+    ],
+    "osd_time": {
+        "on": false,
+        "pos": {
+            "x": 0,
+            "y": 0
+        }
+    },
+    "osd_text": [{
+        "on": false,
+        "text": "",
+        "pos": {
+            "x": 0,
+            "y": 0
+        },
+        "color": {
+        }
+    }],
+    "osd_logo": {
+        "on": false,
+        "pos": {
+            "x": 0,
+            "y": 0
+        }
+    }
+}

@@ -1,0 +1,1158 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/* Copyright (c) 2018-2019 SiFive, Inc */
+
+/dts-v1/;
+#include <dt-bindings/clock/ak_km02_clock.h>
+#include <dt-bindings/pmu/ak_pmu.h>
+
+
+/ {
+	#address-cells = <2>;
+	#size-cells = <2>;
+	compatible = "sifive,fu540-c000", "sifive,fu540";
+
+	aliases {
+		pll0 = &pll0;
+        pll1 = &pll1;
+        pll2 = &pll2;
+        pll3 = &pll3;
+        watchdog0 = &watchdog0;
+        watchdog1 = &watchdog1;
+        rtc = &rtc;
+        pwm0 = &pwm0;
+        pwm1 = &pwm1;
+        pwm2 = &pwm2;
+        pwm3 = &pwm3;
+        pwm4 = &pwm4;
+        pwm5 = &pwm5;
+		uart0 = &uart0;
+		uart1 = &uart1;
+        uart2 = &uart2;
+        uart3 = &uart3;
+		mmc0 = &mmc0;
+        mmc1 = &mmc1;
+        mmc2 = &mmc2;
+		i2c0 = &i2c0;
+		i2c1 = &i2c1;
+		i2c2 = &i2c2;
+		i2c3 = &i2c3;
+		motor0 = &motor0;
+        motor1 = &motor1;
+		gpiokeys = &gpiokeys;
+		adkeys = &adkeys;
+		ethernet0 = &ethernet;
+		l2test = &l2test;
+		ddr_monitor = &ddr_monitor;
+		fastspi = &fastspi;
+		spi0 = &spi0;
+		spi1 = &spi1;
+        quick_start = &quick_start;
+	dvfs = &dvfs;
+	};
+
+	chosen {
+	};
+
+	cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		cpu0: cpu@0 {
+			compatible = "sifive,u54-mc", "sifive,rocket0", "riscv";
+			d-cache-block-size = <64>;
+			d-cache-sets = <64>;
+			d-cache-size = <32768>;
+			d-tlb-sets = <1>;
+			d-tlb-size = <32>;
+			device_type = "cpu";
+			i-cache-block-size = <64>;
+			i-cache-sets = <64>;
+			i-cache-size = <32768>;
+			i-tlb-sets = <1>;
+			i-tlb-size = <32>;
+			mmu-type = "riscv,sv39";
+			reg = <0>;
+			riscv,isa = "rv64imafdc_zsscofpmf";
+			tlb-split;
+			next-level-cache = <&l2cache>;
+			cpu0_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+		cpu1: cpu@1 {
+			compatible = "sifive,u54-mc", "sifive,rocket0", "riscv";
+			d-cache-block-size = <64>;
+			d-cache-sets = <64>;
+			d-cache-size = <32768>;
+			d-tlb-sets = <1>;
+			d-tlb-size = <32>;
+			device_type = "cpu";
+			i-cache-block-size = <64>;
+			i-cache-sets = <64>;
+			i-cache-size = <32768>;
+			i-tlb-sets = <1>;
+			i-tlb-size = <32>;
+			mmu-type = "riscv,sv39";
+			reg = <1>;
+			riscv,isa = "rv64imafdc_zsscofpmf";
+			tlb-split;
+			next-level-cache = <&l2cache>;
+			cpu1_intc: interrupt-controller {
+				#interrupt-cells = <1>;
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+			};
+		};
+	};
+
+	rtc: rtc {
+		compatible = "anyka,av200-rtc";
+		reg = <0x0 0xc0030000 0x0 0x10000>;
+		/*
+		 * under_voltage_detection
+		 * 
+		 * threshold:
+		 * 0: reset when VDDIO drops below 2.71V,
+		 *     and the reset will be deasserted when VDDIO reaches 2.87V
+		 * 1: reset when VDDIO drops below 2.79V,
+		 *     and the reset will be deasserted when VDDIO reaches 2.96V
+		 */
+		threshold = <1>;
+		status = "disable";
+	};
+
+	watchdog0: watchdog0@c00b0000 {
+		compatible = "anyka,av200-wdt0";
+		reg = <0x0 0xc00b0000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <55>;
+		/*max feed dog time = 357s, default setting time = 10s. */
+		def_heartbeat = <10>;
+		status = "disable";
+	};
+
+	watchdog1: watchdog1@c00b1000 {
+		compatible = "anyka,av200-wdt1";
+		reg = <0x0 0xc00b1000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <56>;
+		/*max feed dog time = 357s, default setting time = 10s. */
+		def_heartbeat = <10>;
+		status = "disable";
+	};
+
+    quick_start: quick_start {
+        compatible = "anyka,isp_quick_start";
+        status = "disable";
+    };
+
+	soc {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "sifive,fu540-c000", "sifive,fu540", "simple-bus";
+		ranges;
+		pmu {
+			compatible = "riscv,pmu";
+
+			/**
+			*	cpu-cycles or cycles
+			*   instructions
+			*	cache-references						->		instruction-cache-ITIM-busy	/ branch-direction-misprediction
+			*	cache-misses							->		data-cache-I=DTIM-busy 	/ branch-or-jump-target-misprediction
+			*	branch-instructions or branches			->		instruction-cashe-miss
+			*	branch-misses							->		data-cache-miss or memory-mapped-IO-access
+			*	bus-cycles								->		data-cache-write-back
+			*	stalled-cycles-frontend					->		instruction-TLB-miss
+			*	stalled-cycles-backend					->		data-TLB-miss
+			*	ref-cycles								->		UTLB-miss
+			*/
+
+			riscv,event-to-mhpmevent 	= 	<CACHE_REFERENCES  			0x0000 		INSTRUCTION_CACHE_ITIM_BUSY>,
+											<CACHE_MISSES  				0x0000 		DATA_CACHE_DTIM_BUSY>,
+											<BRANCH_INSTRUCTIONS  		0x0000 		INSTRUCTIONS_CACHE_MISS>,
+											<BRANCH_MISSES  			0x0000 		DATA_CACHE_MISS>,
+											<BUS_CYCLES  				0x0000 		DATA_CACHE_WRITE_BACK>,
+											<STALLED_CYCLES_FRONTEND  	0x0000 		INSTRUCTION_TLB_MISS>,
+											<STALLED_CYCLES_BACKEND  	0x0000 		DATA_TLB_MISS>,
+											<REF_CYCLES  				0x0000 		UTLB_MISS>;
+
+		   	riscv,event-to-mhpmcounters 	= 	<CYCLES 				CYCLES 					CYCLE_HPMCOUNTER>,
+						  						<INSTRUCTIONS 			INSTRUCTIONS 			INSTRET_HPMCOUNTER>,
+
+						  						<CACHE_REFERENCES 			CACHE_REFERENCES 			AREA_HPMCOUNTER>,
+						  						<CACHE_MISSES 				CACHE_MISSES 				AREA_HPMCOUNTER>,
+						  						<BRANCH_INSTRUCTIONS 		BRANCH_INSTRUCTIONS 		AREA_HPMCOUNTER>,
+						  						<BRANCH_MISSES 				BRANCH_MISSES 				AREA_HPMCOUNTER>,
+												<BUS_CYCLES 				BUS_CYCLES 					AREA_HPMCOUNTER>,
+												<STALLED_CYCLES_FRONTEND 	STALLED_CYCLES_FRONTEND 	AREA_HPMCOUNTER>,
+												<STALLED_CYCLES_BACKEND 	STALLED_CYCLES_BACKEND 		AREA_HPMCOUNTER>,
+												<REF_CYCLES 				REF_CYCLES 					AREA_HPMCOUNTER>;
+		};
+
+		lcdc: lcdc@C0800000 {
+			  compatible = "anyka,ak3918av200-lcd-ctrl";
+			  reg = <0x0 0xC0800000 0x0 0x1000>;
+
+			  interrupt-parent = <&plic0>;
+			  interrupts = <10>;
+
+              clocks = <&factor_pll0_clk PLL0_FACTOR_LCD_VCLK
+                        &factor_pll0_clk PLL0_FACTOR_LCD_PCLK >;
+              clock-names = "pll0_lcdc","pll0_lcd_pclk";
+
+              //clk reset
+              resets = <&reset RESET_LCD>, <&reset RESET_LCD_PCLK>;
+              reset-names   = "lcd_control", "lcd_pclk";
+
+	  	};
+
+		ipu: ipu@C0400000 {
+			 compatible = "anyka,av200-ipu-controller";
+			 reg = <0x0 0xC0400000 0x0 0x1000 >;  //share sram.no sure
+			 interrupt-parent = <&plic0>;
+			 interrupts = <6>;
+             clocks = <&factor_pll3_clk PLL3_FACTOR_IPU>;
+			 clock-names = "pll3_ipu";
+	 	};
+
+		encrypt: encrypt@C0A00000 {
+			compatible = "anyka,ak3918av200-encrypt";
+			reg = <0x0 0xc0a00000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <20>;        
+			clocks = <&mix MIX_ENDECRYPT>;
+			clock-names = "encrypt_mix";
+			resets = <&reset RESET_ENCRYPT>;
+			reset-names   = "encrypt";
+			/*
+			 * encrypt-mode
+			 * 0 = CRYPTO_SINGLE_GROUP_MODE ; 1 = CRYPTO_MULTI_GROUP_MODE
+			  */
+			 encrypt-mode = <1>;
+
+		 };
+
+
+
+		plic0: interrupt-controller@c000000 {
+			#interrupt-cells = <1>;
+			compatible = "sifive,plic-1.0.0";
+			reg = <0x0 0xc000000 0x0 0x4000000>;
+			riscv,ndev = <64>;
+			interrupt-controller;
+			interrupts-extended = <
+				&cpu0_intc 0xffffffff &cpu0_intc 9
+				&cpu1_intc 0xffffffff &cpu1_intc 9>;
+		};
+
+#ifdef CONFIG_SYS_FAST_BOOT
+		clint0: clint0 {
+			compatible = "riscv,clint0";
+			interrupts-extended = <
+				&cpu0_intc  0x3 &cpu0_intc  0x7
+				&cpu1_intc  0x3 &cpu1_intc  0x7
+				>;
+			reg = <0x0 0x2000000 0x0 0x010000>;
+		};
+#endif
+
+		reset: reset-controller {
+			compatible = "anyka,ak3918av200-reset";
+            reg = <0x0 0xC0000000 0x0 0x1000>;
+			#reset-cells = <1>;
+		};
+
+		fastspi: spi@0xC0E00000 {
+			//!!!!!the spi0 should change fastspi
+			compatible = "anyka,ak3918av200-fastspi";
+			reg = <0x0 0xc0e00000 0x0 0x7fff>;
+			interrupt-parent = <&plic0>;
+			interrupts = <47>;
+			clocks = <&peri PERI_SFC>, <&factor_pll0_clk PLL0_FACTOR_SFC>;
+			clock-names = "sfc_peri", "sfc_bus";
+
+			resets = <&reset RESET_SFC>, <&reset RESET_SFC_IO>;
+			reset-names   = "sfc", "sfc_io";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disable";
+
+			spif0:spi-flash@0 {
+				compatible = "anyka,ak-spiflash";
+				reg = <0>; /* Chip select 0 */
+				spi-max-frequency = <100000000>;
+				status = "disable";
+				#address-cells = <1>;
+				#size-cells = <0>;
+			};
+
+			spif1:spi-flash@1 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "anyka,ak-spinand";
+				reg = <1>; /* Chip select 1 */
+				spi-max-frequency = <100000000>;
+				status = "disable";
+			};
+		};
+
+		spi0: spi@0xD2138000 {
+			compatible = "anyka,ak3918av200-spi0";
+			reg = <0x0 0xD2138000 0x0 0x7fff>;
+
+			interrupt-parent = <&plic0>;
+			interrupts = <42>;
+			clocks = <&peri PERI_SPI0>;
+			clock-names = "spi0_peri";
+			resets = <&reset RESET_SPI0>;
+			reset-names   = "spi0";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disable";
+		};
+
+		spi1: spi@0xD2140000 {
+			compatible = "anyka,ak3918av200-spi1";
+			reg = <0x0 0xD2140000 0x0 0x7fff>;
+
+			interrupt-parent = <&plic0>;
+			interrupts = <43>;
+			clocks = <&peri PERI_SPI1>;
+			clock-names = "spi1_peri";
+			resets = <&reset RESET_SPI1>;
+			reset-names   = "spi1";
+
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disable";
+		};
+
+		peri_hub: peri_hub@0xD2200000{
+			compatible = "anyka,ak3918av200-peri-hub";
+			reg = <0x0 0xD2200000 0x0 0x01000   
+				   0x0 0xD2800000 0x0 0x2000 >;  //share sram
+			interrupt-parent = <&plic0>;
+			interrupts = <26>;
+
+			clocks = <&factor_pll0_clk PLL0_FACTOR_PERI>; //new
+			clock-names   = "peri_clk"; //new
+			peri-frequency = <200000000>; //peri system: 200Mhz
+		};
+
+		mix_system: mix_system@0xC00C0000{
+			compatible = "anyka,ak3918av200-mix-system";
+			reg = <0x0 0xD2200000 0x0 0x01000   
+				   0x0 0xD2800000 0x0 0x2000 >;  //share sram
+			
+			clocks = <&factor_pll3_clk PLL3_FACTOR_MIX>; //new
+			clock-names   = "mix_clk"; //new
+			mix-frequency = <300000000>; // 300Mhz
+		};
+
+		dmac: dmac@0xD2300000{
+			compatible = "anyka,ak3918av200-dmac";
+			reg = <0x0 0xD2300000 0x0 0x1000 >;
+			interrupt-parent = <&plic0>;
+			interrupts = <25>;
+			clocks = <&peri PERI_DMAC>;
+			clock-names = "dmac_peri";
+			resets = <&reset RESET_DMAC>;
+			reset-names   = "dmac";
+			status = "okay";
+		};
+
+		uart0: uart0@0xD2100000 {
+			compatible = "anyka,av200-uart0";
+			reg = <0x0 0xD2100000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <35>;
+			clocks = <&peri PERI_UART0>;
+			resets = <&reset RESET_UART0>;
+			reset-names   = "uart0";
+			status = "disabled";
+		};
+		uart1: uart1@0xD2108000 {
+			compatible = "anyka,av200-uart1";
+			reg = <0x0 0xD2108000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <36>;
+			clocks = <&peri PERI_UART1>;
+			resets = <&reset RESET_UART1>;
+			reset-names   = "uart1";
+			status = "disabled";
+		};
+
+		uart2: uart2@0xD2110000 {
+			compatible = "anyka,av200-uart2";
+			reg = <0x0 0xD2110000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <37>;
+			clocks = <&peri PERI_UART2>;
+			resets = <&reset RESET_UART2>;
+			reset-names   = "uart2";
+			status = "disabled";
+		};
+
+		uart3: uart3@0xD2118000 {
+			compatible = "anyka,av200-uart3";
+			reg = <0x0 0xD2118000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <38>;
+			clocks = <&peri PERI_UART3>;
+			resets = <&reset RESET_UART3>;
+			reset-names   = "uart3";
+			status = "disabled";
+		};
+
+		tsensor: tsensor@0xC0080000 {
+			compatible = "anyka,av200-tsensor";
+			interrupt-parent = <&plic0>;
+			interrupts = <54>;
+			reg = <0x0 0xC0080000 0x0 0x10000>;
+			status = "okay";
+		};
+
+		mmc0: mmc0@0xD2120000 {
+			compatible = "anyka,av200-mmc0";
+			reg = <0x0 0xD2120000 0x0 0x7fff>;
+			/* 
+			 * ak3918av200's int status all in one reg;
+			 */
+			interrupt-parent = <&plic0>;
+			interrupts = <39>;
+
+			clocks = <&peri PERI_MCI0>;
+			clock-names   = "mmc0";
+			resets	  = <&reset RESET_MCI0>;
+			reset-names   = "mmc0"; /* same as node name */
+			status = "disable";
+		};
+
+		mmc1: mmc1@0xD2128000 {
+			compatible = "anyka,av200-mmc1";
+			reg = <0x0 0xD2128000 0x0 0x7fff>;
+			/* 
+			 * ak3918av200's int status all in one reg;
+			 */
+			interrupt-parent = <&plic0>;
+			interrupts = <40>;
+
+			clocks = <&peri PERI_MCI1>;
+			clock-names   = "mmc1";
+			resets	  = <&reset RESET_MCI1>;
+			reset-names   = "mmc1"; /* same as node name */
+			status = "disable";
+		};
+
+		mmc2: mmc2@0xD2130000 {
+			compatible = "anyka,av200-mmc2";
+			reg = <0x0 0xD2130000 0x0 0x7fff>;
+			/* 
+			 * ak3918av200's int status all in one reg;
+			 */
+			interrupt-parent = <&plic0>;
+			interrupts = <41>;
+
+			clocks = <&peri PERI_MCI2>;
+			clock-names   = "mmc2";
+			resets	  = <&reset RESET_MCI2>;
+			reset-names   = "mmc2"; /* same as node name */
+			status = "disable";
+		};
+
+		pinctrl: pinctrl {
+			compatible = "anyka,ak3918av200-pinctrl";
+			reg = <0x0 0xC0010000 0x0 0x1000>;
+			#address-cells = <2>;
+			#size-cells = <2>;
+			ranges;
+
+			clocks = <&peri PERI_GPIO0>, <&peri PERI_GPIO1>, <&peri PERI_GPIO2>, <&peri PERI_GPIO3>;
+			clock-names = "gpio0_gclk", "gpio1_gclk", "gpio2_gclk", "gpio3_gclk";
+			resets = <&reset RESET_GPIO0>, <&reset RESET_GPIO1>, <&reset RESET_GPIO2>, <&reset RESET_GPIO3>;
+			reset-names = "gpio0", "gpio1", "gpio2", "gpio3";
+			gpio0: gpio0@D2000000 {
+				compatible = "anyka,gpio-bank";
+				reg = <0x0 0xD2000000 0x0 0x1000>;
+				interrupt-parent = <&plic0>;
+				interrupts = <27 1>;
+
+				gpio-controller;
+				#gpio-cells = <2>;
+
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+
+			gpio1: gpio1@D2001000 {
+				compatible = "anyka,gpio-bank";
+				reg = <0x0 0xD2001000 0x0 0x1000>;
+				interrupt-parent = <&plic0>;
+				interrupts = <28 1>;
+
+				gpio-controller;
+				#gpio-cells = <2>;
+
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+			gpio2: gpio2@D2002000 {
+				compatible = "anyka,gpio-bank";
+				reg = <0x0 0xD2002000 0x0 0x1000>;
+				interrupt-parent = <&plic0>;
+				interrupts = <29 1>;
+
+				gpio-controller;
+				#gpio-cells = <2>;
+
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+			gpio3: gpio3@D2003000 {
+				compatible = "anyka,gpio-bank";
+				reg = <0x0 0xD2003000 0x0 0x1000>;
+				interrupt-parent = <&plic0>;
+				interrupts = <30 1>;
+
+				gpio-controller;
+				#gpio-cells = <2>;
+
+				interrupt-controller;
+				#interrupt-cells = <2>;
+			};
+        };
+
+		/*systerm timer*/
+		/*timer {
+			compatible = "anyka,KM02-system-timer";
+			interrupt-parent = <&plic0>;
+			interrupts = <57>,// timer0
+						 <58>,// timer1
+						 <59>,// timer2
+						 <60>,// timer3
+						 <61>;// timer4
+			clock-frequency = <12000000>;
+			status = "okay";
+		};*/
+
+		/*hardware timer*/
+		hw_timer {
+			compatible = "anyka,KM02-hw-timer";
+			reg = <0x0 0xC00A0000 0x0 0x1000
+				   0x0 0xC00A1000 0x0 0x1000
+				   0x0 0xC00A2000 0x0 0x1000
+				   0x0 0xC00A3000 0x0 0x1000
+				   0x0 0xC00A4000 0x0 0x1000>;//寄存器基地址
+			interrupt-parent = <&plic0>;
+			interrupts = <57>,// timer0  //中断号
+						 <58>,// timer1
+						 <59>,// timer2
+						 <60>,// timer3
+						 <61>;// timer4
+			status = "okay";
+		};
+
+		i2c0: i2c0@0xD2004000 {
+			compatible = "anyka,ak3918av200-i2c0";
+			reg = <0x0 0xD2004000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <31>;
+			clocks = <&peri PERI_I2C0>;
+			clock-names = "i2c0_gclk";
+			resets = <&reset RESET_I2C0>;
+            reset-names   = "i2c0";
+			//reg-shift = <2>;
+			//reg-io-width = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		i2c1: i2c1@0xD2005000 {
+			compatible = "anyka,ak3918av200-i2c1";
+			reg = <0x0 0xD2005000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <32>;
+			clocks = <&peri PERI_I2C1>;
+			clock-names = "i2c1_gclk";
+			resets = <&reset RESET_I2C1>;
+            reset-names   = "i2c1";
+			//reg-shift = <2>;
+			//reg-io-width = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		i2c2: i2c2@0xD2006000 {
+			compatible = "anyka,ak3918av200-i2c2";
+			reg = <0x0 0xD2006000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <33>;
+			clocks = <&peri PERI_I2C2>;
+			clock-names = "i2c2_gclk";
+			resets = <&reset RESET_I2C2>;
+            reset-names   = "i2c2";
+			//reg-shift = <2>;
+			//reg-io-width = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		i2c3: i2c3@0xD2007000 {
+			compatible = "anyka,ak3918av200-i2c3";
+			reg = <0x0 0xD2007000 0x0 0x1000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <34>;
+			clocks = <&peri PERI_I2C3>;
+			clock-names = "i2c3_gclk";
+			resets = <&reset RESET_I2C3>;
+            reset-names   = "i2c3";
+			//reg-shift = <2>;
+			//reg-io-width = <1>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			status = "disabled";
+		};
+
+		motor0: motor0 {
+			compatible = "anyka,ak3918av200-motor0";
+			status = "disable";
+		};
+
+		motor1: motor1 {
+			compatible = "anyka,ak3918av200-motor1";
+			status = "disable";
+		};
+
+		ethernet: ethernet@0xC0A10000 {
+            compatible = "anyka,ak3918av200-ethernet";
+            reg = <0x0 0xC0A10000 0x0 0x10000>,
+                  <0x0 0xC0000000 0x0 0x200000>;
+            /*
+             * Bank0
+             * 0x08000024 [16] MAC Interrupt
+             */  
+			interrupt-parent = <&plic0>; 
+            interrupts = <19>;
+
+            clocks = <&mix MIX_MAC>,
+                  <&factor_pll3_clk PLL3_FACTOR_MAC_OPCLK>,
+                  <&factor_pll3_clk PLL3_FACTOR_MIX>;
+            clock-names = "mac_mix", "mac0_opclk", "mix";
+            resets = <&reset RESET_MAC>;
+            reset-names   = "mac";
+
+            mac-address = [00 00 00 00 00 00];
+            status = "disable";
+        };
+
+		l2cache: cache-controller@2010000 {
+			compatible = "anyka,u64-c000-ccache", "cache";
+			cache-block-size = <64>;
+			cache-level = <2>;
+			cache-sets = <512>;
+			cache-size = <262144>;
+			cache-unified;
+			interrupt-parent = <&plic0>;
+			interrupts = <1 2 3 4>;
+			reg = <0x0 0x2010000 0x0 0x1000>;
+		};
+
+		l2test: l2test@42000000 {
+			compatible = "anyka,ak3918av200-l2-cache-test";
+			reg = <0x0 0x42000000 0x0 0x1000
+			       0x0 0x82000000 0x0 0x1000>;
+			status = "disabled";
+		};
+
+		testcase: testcase@00000000 {
+			compatible = "anyka,ak3918av200-testcase";
+			status = "okay";
+		};
+
+		ddr_monitor: ddr_monitor@C0C00000 {
+			compatible = "anyka,ak3918av200-ddr-monitor";
+			reg = <0x0 0xC0C00000 0x0 0x00001000   /* ddr monitor */
+				   0x0 0xC0C04000 0x0 0x00001000   /* ddr ctrl */	
+	      		   0x0 0xC00C0000 0x0 0x00001000>;  /*misc csr*/
+			interrupt-parent = <&plic0>;
+			interrupts = <13>;		 		
+			status = "disabled";
+		};	
+
+        vi0: vi0@C0600000 {
+            compatible = "anyka,ak3918av200-vi";
+            reg = <0x0 0xC0600000 0x0 0x20000   //ISP
+                0x0 0xC0620000 0x0 0x8000    //PP
+                0x0 0xC0628000 0x0 0x8000    //VICAP
+                0x0 0xC063F000 0x0 0x1000    //ISS
+                0x0 0xC0630000 0x0 0x8000    //MIPI0&1 CSI CONTROLLER
+                /*0x0 0xC0000000 0x0 0x10000 //TopSystem (clock & reset)*/
+                0x0 0xC0040000 0x0 0x10000   //Analog (included mipi dphy)
+                >;
+
+            interrupt-parent = <&plic0>;
+            interrupts = <7 0>;
+
+            resets =/* sclk & mipi-dphy-cfgclk no reset*/
+                <&reset RESET_ISP_SYS>,
+                <&reset RESET_ISP>,
+                <&reset RESET_VPP>,
+                <&reset RESET_VIN>;
+            reset-names =
+                "reset_iss",
+                "reset_isp",
+                "reset_vpp",
+                "reset_vin";
+
+            status = "disable";
+        };
+        
+        isp: isp@0xC0600000 {
+            compatible = "anyka,ak3918av200-isp";
+            reg = <0x0 0xC0600000 0x0 0x20000   //ISP
+                   0x0 0xC063F000 0x0 0x1000>;  //ISS
+
+            status = "disable";
+        };
+
+        vicap: vicap@0xC0628000 {
+            compatible = "anyka,ak3918av200-vicap";
+            reg = <0x0 0xC0628000 0x0 0x8000    // VICAP
+                   0x0 0xC063F000 0x0 0x1000  // ISS
+                   0x0 0xC0630000 0x0 0x8000    // MIPI0 & MIPI1 CSI CONTROLLER
+                   0x0 0xC0040000 0x0 0x10000>;   // Analog (included mipi dphy)
+            status = "disable";
+        };
+
+        pp: pp@0xC0620000 {
+            compatible = "anyka,ak3918av200-pp";
+            reg = <0x0 0xC0620000 0x0 0x8000    //PP
+                   0x0 0xC063F000 0x0 0x1000>;  //ISS
+
+            status = "disable";
+        };
+
+		venc: venc@C0200000 {
+			compatible = "anyka,ak3918av200-venc";
+			reg = <0x0 0xC0200000 0x0 0x10000>;
+			interrupt-parent = <&plic0>;
+			interrupts = <9 0>;
+			clocks =  <&factor_pll1_clk  PLL1_FACTOR_ENC>;
+			clock-names =  "clk_enc";
+			clock-frequency = <351000000>;
+
+			resets = <&reset RESET_ENC>;
+			reset-names   = "venc";
+
+			status = "disable";
+		};
+
+        venc_bridge: venc_bridge@21500000 {
+            compatible = "anyka,ak3918av200-venc-bridge";
+            reg = <0x0 0xC0300000 0x0 0x10000>;
+            status = "disable";
+        };
+
+		npu: npu@0xD1800000 {
+            compatible = "anyka,ak3918av200-npu";
+		interrupt-parent = <&plic0>;
+		interrupts = <8>;	
+            clocks = <&factor_pll1_clk PLL1_FACTOR_DSP>, <&factor_pll3_clk PLL3_FACTOR_NNE>;
+            clock-names = "dsp_clk", "nne_clk";
+            resets = <&reset RESET_DSP>, <&reset RESET_NNE>;
+            reset-names = "reset_dsp", "reset_nne";
+		reg = <0x0 0xD1800000 0x0 0x00001000   /* REG ctrl */
+	      	   0x0 0x41400000 0x0 0x00008000>; /* DSP communication area */
+        #address-cells = <1>;
+		#size-cells = <1>;
+		ranges = <0x00000000 0x0 0x00000000   0x10000000
+				  0xD0000000 0x0 0xD0000000   0x00010000
+				  0xD0010000 0x0 0xD0010000   0x00010000
+				  0xD1000000 0x0 0xD1000000   0x00800000
+				  0x81000000 0x0 0x41000000   0x8000000>;
+            status = "disabled";
+		dsp@0 {
+			};	
+		};
+
+        usb: usb@0xC0A50000 {
+            compatible = "anyka,ak3918av200-usb";
+            reg = <0x0 0xC0A50000 0x0 0x10000>,
+                  <0x0 0xC0000000 0x0 0x200000>;
+            interrupt-parent = <&plic0>;
+            interrupts = <15
+                          14>;
+            clocks = <&mix MIX_USB_OTG>,
+                     <&factor_pll3_clk PLL3_FACTOR_MIX>;
+            clock-names = "usb_mix", "mix";
+            resets = <&reset RESET_USB_OTG>;
+            reset-names = "usb";
+            status = "disable";
+        };
+
+        saradc: saradc@0xC0070000 {
+            compatible = "anyka,ak3918av200-sar-adc";
+            reg = <0x0 0xC0070000 0x0 0x10000>;
+            interrupt-parent = <&plic0>;
+            interrupts = <62>;
+            resets = <&reset RESET_SARADC>;
+            reset-names = "saradc";
+            clocks = <&factor_osc24 OSC24_FACTOR_SAR_ACLK>;
+            status = "disable";
+        };
+
+		adc_dac: adc_dac@0xD2150000 {
+			compatible = "anyka,ak3918av200-adc-dac";
+			reg = <0x0 0xC0000000 0x0 0x200000>, // TopSystem
+                  <0x0 0xC0040000 0x0 0x10000>,  // Analog
+                  <0x0 0xD2150000 0x0 0x8000>,   // ADC CTRL
+                  <0x0 0xD2158000 0x0 0x8000>,   // DAC CTRL
+                  <0x0 0xD2148000 0x0 0x8000>;   // PDM CTRL
+			interrupt-parent = <&plic0>;
+			interrupts = <45 /* ADC controller */
+                          46 /* DAC controller */
+                          44 /* PDM controller */
+                          48 /* I2S */
+                         >;
+			clocks = <&factor_pll2_clk PLL2_FACTOR_ADC>,
+                     <&peri PERI_ADC>,
+                     <&factor_pll2_clk PLL2_FACTOR_DAC>,
+                     <&peri PERI_DAC>,
+                     <&factor_pll2_clk PLL2_FACTOR_DAC_HS>,
+                     <&factor_pll2_clk PLL2_FACTOR_PDM>,
+                     <&peri PERI_PDM>,
+                     <&pll2 PLL2_CLK>;
+            clock-names = "adc_clk",
+                          "adc_gclk",
+                          "dac_clk",
+                          "dac_gclk",
+                          "dachs_clk",
+                          "pdm_clk",
+                          "pdm_gclk",
+                          "pll_clk";
+			resets = <&reset RESET_ADC>,
+                     <&reset RESET_ADC_CTRL>,
+                     <&reset RESET_DAC>,
+                     <&reset RESET_DAC_CTRL>,
+                     <&reset RESET_DAC_HIGH>,
+                     <&reset RESET_PDM>,
+                     <&reset RESET_PDM_CTRL>;
+            reset-names = "adc",
+                          "adc_ctrl",
+                          "dac",
+                          "dac_ctrl",
+                          "dachs",
+                          "pdm",
+                          "pdm_ctrl";
+			status = "disabled";
+		};
+
+        efuse: efuse@C0050000 {
+            compatible = "anyka,ak3918av200-efuse";
+            reg = <0x0 0xC0050000 0x0 0x10000>;
+            status = "okay";
+        };
+
+        srgb: srgb {
+            compatible = "anyka,ak-lcd-srgb";
+            status = "disable";
+        };
+	};
+
+	gpiokeys: gpiokeys {
+		compatible = "anyka,ak3918av200-gpiokeys";
+		status = "disable";
+	};
+
+	adkeys: adkeys {
+		compatible = "anyka,ak3918av200-adckeys";
+		status = "disable";
+	};
+
+	leds: leds {
+		compatible = "anyka,ak3918av200-leds";
+		status = "disable";
+	};
+
+    dvfs: dvfs {
+        compatible = "anyka,ak3918av200-dvfs";
+        reg = <0x0 0xc0000000 0x0 0x1000>;
+        clocks = <&factor_pll0_clk PLL0_FACTOR_PERI>,
+                    <&factor_pll0_clk PLL0_FACTOR_LCD_VCLK>,
+                    <&factor_pll0_clk PLL0_FACTOR_LCD_PCLK>,
+                    <&factor_pll0_clk PLL0_FACTOR_SFC>;
+        clock-names = "pll0_peri",
+                        "pll0_lcd_vclk",
+                        "pll0_lcd_pclk",
+                        "pll0_sfc";
+        status = "disable";
+    };
+
+	pwm0: pwm0@c0090000 {
+		compatible = "anyka,av200-pwm0";
+		reg = <0x0 0xc0090000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <52>;
+		status = "disable";
+	};
+
+	pwm1: pwm1@c0091000 {
+		compatible = "anyka,av200-pwm1";
+		reg = <0x0 0xc0091000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <52>;
+		status = "disable";
+	};
+
+	pwm2: pwm2@c0092000 {
+		compatible = "anyka,av200-pwm2";
+		reg = <0x0 0xc0092000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <52>;
+		status = "disable";
+	};
+
+	pwm3: pwm3@c0093000 {
+		compatible = "anyka,av200-pwm3";
+		reg = <0x0 0xc0093000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <52>;
+		status = "disable";
+	};
+
+	pwm4: pwm4@c0094000 {
+		compatible = "anyka,av200-pwm4";
+		reg = <0x0 0xc0094000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <52>;
+		status = "disable";
+	};
+
+	pwm5: pwm5@c0095000 {
+		compatible = "anyka,av200-pwm5";
+		reg = <0x0 0xc0095000 0x0 0x1000>;
+		interrupt-parent = <&plic0>;
+		interrupts = <52>;
+		status = "disable";
+	};
+
+	clocks {
+          osc24M: osc24M {
+            compatible = "fixed-clock";
+            #clock-cells = <0>;
+            clock-output-names = "osc24M";
+            clock-frequency = <24000000>;
+        };
+
+		/* freq(M) = 24 * nf / nr /od ; nf = freq(M) * od * nr / 24 = 1000 */
+        pll0: pll0 {
+            compatible = "anyka,ak3918av200-fixed-clk";
+            #clock-cells = <0>;
+            clock-div-od = <1>;
+            clock-div-nr = <3>; // nf = 100
+            clock-id = <PLL0_CLK>;
+            clock-frequency = <800000000>;
+            clock-output-names = "pll0";
+            clocks = <&osc24M>;
+        };
+
+        pll1: pll1 {
+            compatible = "anyka,ak3918av200-fixed-clk";
+            #clock-cells = <0>;
+            clock-div-od = <2>;
+            clock-div-nr = <2>;  // nf = 117
+			clock-id = <PLL1_CLK>;
+            clock-frequency = <702000000>;
+            clock-output-names = "pll1";
+            clocks = <&osc24M>;
+        };
+
+        pll2: pll2 {
+            compatible = "anyka,ak3918av200-fixed-clk";
+            #clock-cells = <0>;
+            clock-div-od = <1>;
+            clock-div-nr = <25>; /* nf = 576 */
+            clock-id = <PLL2_CLK>;
+            clock-frequency = <552960000>;
+            clock-output-names = "pll2";
+            clocks = <&osc24M>;
+        };
+
+		/* ddr used, has to same as bootcore */
+        pll3: pll3 {
+            compatible = "anyka,ak3918av200-fixed-clk";
+            #clock-cells = <0>;
+            clock-div-od = <1>;
+            clock-div-nr = <2>;  // nf = 75
+            clock-id = <PLL3_CLK>;
+            clock-frequency = <900000000>;
+            clock-output-names = "pll3";
+            clocks = <&osc24M>;
+        };
+
+
+		factor_pll0_clk: factor_pll0_clk {
+            compatible = "anyka,ak3918av200-pll0-factor-clk";
+            #clock-cells = <1>;
+            clock-id =  <PLL0_FACTOR_NNE>,		 	<PLL0_FACTOR_DSP>, 			<PLL0_FACTOR_PERI>,
+						<PLL0_FACTOR_LCD_VCLK>, 	<PLL0_FACTOR_LCD_PCLK>, 	<PLL0_FACTOR_ENC>, 
+						<PLL0_FACTOR_SFC>;
+            clock-output-names = "pll0_nne",		"pll0_dsp", 	"pll0_peri",	 
+								 "pll0_lcd_vclk",	"pll0_lcd_pclk", 	"pll0_enc", 
+								 "pll0_sfc";
+            clocks = <&pll0 PLL0_CLK>; 
+        };
+
+		factor_pll1_clk: factor_pll1_clk {
+            compatible = "anyka,ak3918av200-pll1-factor-clk";
+            #clock-cells = <1>;
+			clock-id =  <PLL1_FACTOR_ISP>, <PLL1_FACTOR_VICAP>, <PLL1_FACTOR_PP>,
+						<PLL1_FACTOR_MIX>,
+                        <PLL1_FACTOR_MIPI_DPHY>,
+						<PLL1_FACTOR_ENC>,
+						<PLL1_FACTOR_DSP>,
+						<PLL1_FACTOR_CSI0_SCLK>,
+						<PLL1_FACTOR_CSI1_SCLK>;
+            clock-output-names = "pll1_isp", "pll1_vicap", "pll1_pp",
+								 "pll1_mix", "pll1_mipi_dphy",
+								 "pll1_enc",
+								 "pll1_dsp",
+								 "pll1_csi0_sclk",
+								 "pll1_csi1_sclk";
+            clocks = <&pll1 PLL1_CLK>; 
+        };
+
+		factor_pll2_clk: factor_pll2_clk {
+            compatible = "anyka,ak3918av200-pll2-factor-clk";
+            #clock-cells = <1>;
+            clock-id = <PLL2_FACTOR_ADC>, <PLL2_FACTOR_DAC>, <PLL2_FACTOR_DAC_HS>,
+                       <PLL2_FACTOR_I2S>, <PLL2_FACTOR_I2S_OUT>, <PLL2_FACTOR_PDM>;
+            clock-output-names = "pll2_adc", "pll2_dac", "pll2_dachs",
+                                 "pll2_i2s", "pll2_i2sout", "pll2_pdm";
+            clocks = <&pll2 PLL2_CLK>; 
+        };
+
+        factor_pll3_clk: factor_pll3_clk {
+            compatible = "anyka,ak3918av200-pll3-factor-clk";
+            #clock-cells = <1>;
+            clock-id = <PLL3_FACTOR_MAC_OPCLK>,
+                        <PLL3_FACTOR_ISP>, <PLL3_FACTOR_VICAP>, <PLL3_FACTOR_PP>,
+                        <PLL3_FACTOR_MIX>,
+                        <PLL3_FACTOR_MIPI_DPHY>,
+                        <PLL3_FACTOR_IPU>,
+                        <PLL3_FACTOR_ISS>,
+                        <PLL3_FACTOR_NNE>;
+            clock-output-names = "pll3_mac_opclk",
+                                    "pll3_isp", "pll3_vicap", "pll3_pp",
+                                    "pll3_mix",
+                                    "pll3_mipi_dphy",
+                                    "pll3_ipu",
+                                    "pll3_iss",
+                                    "pll3_nne";
+            clocks = <&pll3 PLL3_CLK>;
+        };
+
+		factor_osc24: factor_osc24 {
+            compatible = "anyka,ak3918av200-osc24-factor-clk";
+            #clock-cells = <1>;
+            clock-id = <OSC24_FACTOR_SAR_ACLK>, <OSC24_FACTOR_PSENSOR>, <OSC24_FACTOR_RTC_TOGGLE>,
+                      <OSC24_FACTOR_USB_PHY>,
+                      <OSC24_FACTOR_CSI_PHY>,
+                      <OSC24_FACTOR_CSI0_SCLK>,
+                      <OSC24_FACTOR_CSI1_SCLK>;
+            clock-output-names = "osc24_sar_aclk", "osc24_psensor", "osc24_rtc_toggle",
+                        "osc24_usb_phy",
+                        "osc24_csi_phy",
+                        "osc24_csi0_sclk",
+                        "osc24_csi1_sclk";
+            clocks = <&osc24M>;
+        };
+
+		peri: peri{
+			compatible = "anyka,ak3918av200-gate-clk";
+			#clock-cells = <1>;
+
+			/*
+			* PERI_GATE.
+			*/
+			clock-id =  <PERI_GPIO0>,		<PERI_GPIO1>, 		<PERI_GPIO2>, 		<PERI_GPIO3>, 		
+						<PERI_I2C0>,		<PERI_I2C1>,		<PERI_I2C2>, 		<PERI_I2C3>, 			
+						<PERI_UART0>, 		<PERI_UART1>,		<PERI_UART2>,		<PERI_UART3>, 		
+						<PERI_MCI0>, 		<PERI_MCI1>, 		<PERI_MCI2>,		
+						<PERI_SPI0>,		<PERI_SPI1>,
+						<PERI_PDM>,			<PERI_ADC>, 		<PERI_DAC>,			<PERI_SFC>,
+						<PERI_PERI_HUB>,	<PERI_DMAC>,	
+						<PERI_I2S>;	
+
+			clock-ctrlbit = <59>,		<60>, 		<61>, 		<62>, 		
+							<63>,		<64>,		<65>, 		<66>, 			
+							<67>, 		<68>,		<69>,		<70>, 		
+							<71>, 		<72>, 		<73>,		
+							<74>,		<75>,
+							<76>,		<77>, 		<78>,		<79>,
+							<58>,		<57>,	
+							<80>;	
+			
+			clock-output-names ="gpio0_peri",	"gpio1_peri",	"gpio2_peri",	"gpio3_peri",		
+								"i2c0_peri",	"i2c1_peri",	"i2c2_peri",	"i2c3_peri",		
+								"uart0_peri",	"uart1_peri",	"uart2_peri",	"uart3_peri",	
+								"mci0_peri",	"mci1_peri",	"mci2_peri",	
+								"spi0_peri",	"spi1_peri",
+								"pdm_peri",		"adc_peri",		"dac_peri",		"sfc_peri",
+								"peri_hub_peri","dmac_peri",
+								"i2s_peri";
+
+			clocks = <&factor_pll0_clk PLL0_FACTOR_PERI>;
+		};
+
+		mix: mix{
+			compatible = "anyka,ak3918av200-gate-clk";
+			#clock-cells = <1>;
+
+			/*
+			* MIX_GATE.
+			*/
+			clock-id =  <MIX_USB_OTG>,		<MIX_HASH>,		<MIX_PKE>,    
+						<MIX_TRNG>,    		<MIX_MAC>,		<MIX_ENDECRYPT>;			
+			clock-ctrlbit = <90>,	<89>, 	<88>,
+							<87>,  	<86>, 	<85>;				
+			clock-output-names ="usb_otg_mix",	"hash_mix",		"pke_mix",	
+								"trng_mix", 	"mac_mix", 		"encrypt_mix";		
+
+			clocks = <&factor_pll3_clk PLL3_FACTOR_MIX>;
+		};
+	};
+	
+};
+
+/*
+* !!!Please notice this configration as same as the ak_pcm_uapi.h!!!
+*/
+#define SND_CARD_DAC_PLAYBACK   0
+#define SND_CARD_ADC_CAPTURE    1
+#define SND_CARD_DAC_LOOPBACK   2
+#define SND_CARD_I2S0_SEND      3
+#define SND_CARD_I2S0_RECV      4
+#define SND_CARD_I2S0_LOOPBACK  5
+#define SND_CARD_PDM_RECV       6
+
+#define AK_PCM_DEV_PLAYBACK     0
+#define AK_PCM_DEV_CAPTURE      1
+#define AK_PCM_DEV_LOOPBACK     2
+
+#define MIC_INFO_ADC_MIC0     (1 << 0)
+#define MIC_INFO_ADC_MIC1     (1 << 1)
+#define MIC_INFO_PDM0         (1 << 8)
+#define MIC_INFO_PDM1         (1 << 9)
+#define MIC_INFO_PDM2         (1 << 10)
+#define MIC_INFO_PDM3         (1 << 11)
+#define MIC_INFO_PDM_POLAR_LR (1 << 16)
+
+#define SPK_INFO_DAC_HPOUT   (1 << 0)
+
